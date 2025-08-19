@@ -264,12 +264,13 @@ body {
     transform: translateX(-50%) translateY(-100px);
     background: #ef4444;
     color: white;
-    padding: 15px 25px;
+    padding: 12px 20px; /* Sedikit kurangi padding */
     border-radius: 12px;
     box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
     z-index: 1000;
     transition: transform 0.3s ease;
-    max-width: 90%;
+    max-width: 95%; /* Tingkatkan max-width */
+    text-align: center; /* Tambahkan text-align center */
 }
 
 .offline-notification.show {
@@ -279,11 +280,17 @@ body {
 .notification-content {
     display: flex;
     align-items: center;
+    justify-content: center; /* Pusatkan konten */
     gap: 10px;
+    flex-wrap: wrap; /* Izinkan wrapping jika teks terlalu panjang */
 }
 
 .notification-icon {
     font-size: 1.2rem;
+}
+
+.notification-text {
+    font-size: 0.95rem; /* Sesuaikan ukuran font */
 }
 
 /* Animations */
