@@ -154,8 +154,29 @@ async function checkServerStatus() {
       // Server tidak aktif berdasarkan status code atau error lainnya
       let errorMessage = "Server Tidak Aktif";
 
-      if (data.status) {
-        // Jika ada status code dari server target
+      if (data.error) {
+        // Gunakan error message dari proxy yang sudah mendeteksi Cloudflare error pages
+        if (data.error.includes("Bad Gateway")) {
+          errorMessage = "Server Tidak Aktif (Bad Gateway)";
+        } else if (data.error.includes("Service Unavailable")) {
+          errorMessage = "Server Tidak Aktif (Service Unavailable)";
+        } else if (data.error.includes("Gateway Timeout")) {
+          errorMessage = "Server Tidak Aktif (Gateway Timeout)";
+        } else if (data.error.includes("Internal Server Error")) {
+          errorMessage = "Server Tidak Aktif (Internal Server Error)";
+        } else if (data.error.includes("Error 502")) {
+          errorMessage = "Server Tidak Aktif (Bad Gateway)";
+        } else if (data.error.includes("Error 503")) {
+          errorMessage = "Server Tidak Aktif (Service Unavailable)";
+        } else if (data.error.includes("Error 504")) {
+          errorMessage = "Server Tidak Aktif (Gateway Timeout)";
+        } else if (data.error.includes("Error 500")) {
+          errorMessage = "Server Tidak Aktif (Internal Server Error)";
+        } else {
+          errorMessage = "Server Tidak Aktif: " + data.error;
+        }
+      } else if (data.status) {
+        // Fallback ke status code jika tidak ada error message
         switch (data.status) {
           case 502:
             errorMessage = "Server Tidak Aktif (Bad Gateway)";
@@ -181,9 +202,6 @@ async function checkServerStatus() {
           default:
             errorMessage = `Server Tidak Aktif (HTTP ${data.status})`;
         }
-      } else if (data.error) {
-        // Jika ada error message dari proxy
-        errorMessage = "Server Tidak Aktif: " + data.error;
       }
 
       updateServerStatus("offline", errorMessage);
@@ -192,6 +210,11 @@ async function checkServerStatus() {
 
     updateLastCheck();
     updateResponseTime();
+
+    // Log untuk debugging (opsional)
+    if (data.responseSnippet) {
+      console.log("Server response snippet:", data.responseSnippet);
+    }
   } catch (error) {
     const endTime = Date.now();
     responseTime = endTime - startTime;

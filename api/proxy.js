@@ -35,34 +35,89 @@ module.exports = async (req, res) => {
     const responseText = await response.text();
 
     // Determine if server is considered "active" based on status code
-    const isServerActive = response.status >= 200 && response.status < 400;
-
+    let isServerActive = response.status >= 200 && response.status < 400;
     let errorMessage = null;
-    if (!isServerActive) {
-      switch (response.status) {
-        case 502:
-          errorMessage = "Bad Gateway";
-          break;
-        case 503:
-          errorMessage = "Service Unavailable";
-          break;
-        case 504:
-          errorMessage = "Gateway Timeout";
-          break;
-        case 500:
-          errorMessage = "Internal Server Error";
-          break;
-        case 404:
-          errorMessage = "Not Found";
-          break;
-        case 403:
-          errorMessage = "Forbidden";
-          break;
-        case 401:
-          errorMessage = "Unauthorized";
-          break;
-        default:
-          errorMessage = `HTTP ${response.status} ${response.statusText}`;
+
+    // Check for Cloudflare error pages even if status is 200
+    if (isServerActive && responseText) {
+      const lowerText = responseText.toLowerCase();
+
+      // Detect Cloudflare error pages
+      if (
+        lowerText.includes("bad gateway") &&
+        lowerText.includes("cloudflare")
+      ) {
+        isServerActive = false;
+        errorMessage = "Bad Gateway (detected from Cloudflare error page)";
+      } else if (
+        lowerText.includes("service unavailable") &&
+        lowerText.includes("cloudflare")
+      ) {
+        isServerActive = false;
+        errorMessage =
+          "Service Unavailable (detected from Cloudflare error page)";
+      } else if (
+        lowerText.includes("gateway timeout") &&
+        lowerText.includes("cloudflare")
+      ) {
+        isServerActive = false;
+        errorMessage = "Gateway Timeout (detected from Cloudflare error page)";
+      } else if (
+        lowerText.includes("error 502") ||
+        lowerText.includes("error code 502")
+      ) {
+        isServerActive = false;
+        errorMessage = "Bad Gateway (Error 502)";
+      } else if (
+        lowerText.includes("error 503") ||
+        lowerText.includes("error code 503")
+      ) {
+        isServerActive = false;
+        errorMessage = "Service Unavailable (Error 503)";
+      } else if (
+        lowerText.includes("error 504") ||
+        lowerText.includes("error code 504")
+      ) {
+        isServerActive = false;
+        errorMessage = "Gateway Timeout (Error 504)";
+      } else if (
+        lowerText.includes("error 500") ||
+        lowerText.includes("error code 500")
+      ) {
+        isServerActive = false;
+        errorMessage = "Internal Server Error (Error 500)";
+      }
+    }
+
+    // If still active, check HTTP status codes
+    if (isServerActive && !errorMessage) {
+      if (response.status < 200 || response.status >= 400) {
+        isServerActive = false;
+        switch (response.status) {
+          case 502:
+            errorMessage = "Bad Gateway";
+            break;
+          case 503:
+            errorMessage = "Service Unavailable";
+            break;
+          case 504:
+            errorMessage = "Gateway Timeout";
+            break;
+          case 500:
+            errorMessage = "Internal Server Error";
+            break;
+          case 404:
+            errorMessage = "Not Found";
+            break;
+          case 403:
+            errorMessage = "Forbidden";
+            break;
+          case 401:
+            errorMessage = "Unauthorized";
+            break;
+          default:
+            errorMessage = `HTTP ${response.status} ${response.statusText}`;
+        }
       }
     }
 
@@ -77,6 +132,8 @@ module.exports = async (req, res) => {
       contentLength: responseText.length,
       headers: Object.fromEntries(response.headers.entries()),
       error: errorMessage,
+      // Include response snippet for debugging (first 200 chars)
+      responseSnippet: responseText.substring(0, 200),
     });
   } catch (error) {
     console.error("Proxy error:", error);
