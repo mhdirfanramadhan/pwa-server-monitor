@@ -136,3 +136,42 @@ Aplikasi ini dibuat untuk keperluan monitoring server sederhana. Silakan modifik
 
 © 2025 Server Monitor PWA - Dibuat dengan ❤️ menggunakan HTML, CSS, dan JavaScript
 
+
+
+## Deployment ke Vercel (dengan Proxy untuk Server HTTP)
+
+Jika server monitoring Anda tidak mendukung HTTPS, Anda dapat mendeploy aplikasi ini ke Vercel dan menggunakan Vercel Serverless Function sebagai proxy untuk mengatasi masalah Mixed Content.
+
+### Struktur Proyek Setelah Penambahan Proxy
+
+```
+pwa-server-monitor/
+├── api/
+│   └── proxy.js        # Vercel Serverless Function sebagai proxy
+├── index.html
+├── style.css
+├── script.js
+├── service-worker.js
+├── manifest.json
+└── README.md
+```
+
+### Langkah-langkah Deployment ke Vercel
+
+1.  **Pastikan Anda memiliki akun Vercel** dan Vercel CLI terinstal (`npm i -g vercel`).
+2.  **Login ke Vercel CLI** dari terminal di direktori `pwa-server-monitor`:
+    ```bash
+    vercel login
+    ```
+3.  **Deploy proyek Anda**:
+    ```bash
+    vercel deploy
+    ```
+    Ikuti petunjuk di terminal. Vercel akan secara otomatis mendeteksi file `api/proxy.js` sebagai Serverless Function dan `index.html` sebagai aplikasi frontend.
+4.  **Akses aplikasi Anda** melalui URL yang diberikan oleh Vercel (misalnya `https://your-project-name.vercel.app`).
+
+Dengan konfigurasi ini, aplikasi PWA Anda akan memanggil `/api/proxy` (melalui HTTPS) yang kemudian akan meneruskan permintaan ke server monitoring Anda (`http://tassby.kozow.com:8074/`). Respons dari server monitoring akan dikembalikan melalui proxy ke aplikasi PWA Anda, semua dalam konteks HTTPS, sehingga tidak ada lagi masalah Mixed Content.
+
+**Penting:** Pastikan Anda telah mengupdate file `script.js` di proyek lokal Anda dengan perubahan yang saya berikan sebelumnya, yang mengarahkan permintaan ke `/api/proxy`.
+
+

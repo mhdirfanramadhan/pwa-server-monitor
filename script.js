@@ -124,20 +124,21 @@ async function checkServerStatus() {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), SERVER_CONFIG.timeout);
         
-        const response = await fetch(SERVER_CONFIG.url, {
+        const response = await fetch("/api/proxy", {
             method: 'GET',
-            mode: 'no-cors', // Untuk menghindari CORS issues
-            signal: controller.signal,
             cache: 'no-cache'
         });
         
-        clearTimeout(timeoutId);
-        const endTime = Date.now();
-        responseTime = endTime - startTime;
+        const data = await response.json();
+
+        if (data.success) {
+            updateServerStatus('online', 'Server Aktif');
+            responseTime = data.responseTime;
+        } else {
+            updateServerStatus('offline', 'Server Tidak Aktif: ' + data.error);
+            responseTime = data.responseTime;
+        }
         
-        // Karena mode no-cors, kita tidak bisa membaca response
-        // Tapi jika fetch berhasil tanpa error, server kemungkinan aktif
-        updateServerStatus('online', 'Server Aktif');
         updateLastCheck();
         updateResponseTime();
         
