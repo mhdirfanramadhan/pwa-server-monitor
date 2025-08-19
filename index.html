@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#2563eb">
+    <title>Server Monitor</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/png" sizes="192x192" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIgZmlsbD0iIzI1NjNlYiIvPgo8cGF0aCBkPSJNMTIgNnY2bDQgMiIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KPC9zdmc+">
+    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIgZmlsbD0iIzI1NjNlYiIvPgo8cGF0aCBkPSJNMTIgNnY2bDQgMiIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KPC9zdmc+">
+    
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1 class="app-title">Server Monitor</h1>
+            <div class="connection-status" id="connectionStatus">
+                <span class="status-dot offline"></span>
+                <span class="status-text">Memeriksa koneksi...</span>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <div class="server-card" id="serverCard">
+                <div class="server-header">
+                    <div class="server-info">
+                        <h2 class="server-name" id="serverName">Laragon Server</h2>
+                        <p class="server-url" id="serverUrl">http://tassby.kozow.com:8074/</p>
+                    </div>
+                    <div class="server-status" id="serverStatus">
+                        <div class="status-indicator checking" id="statusIndicator">
+                            <div class="status-icon" id="statusIcon">
+                                <div class="loading-spinner"></div>
+                            </div>
+                            <span class="status-label" id="statusLabel">Memeriksa...</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="server-details">
+                    <div class="detail-item">
+                        <span class="detail-label">Status Terakhir:</span>
+                        <span class="detail-value" id="lastCheck">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Response Time:</span>
+                        <span class="detail-value" id="responseTime">-</span>
+                    </div>
+                </div>
+
+                <div class="server-actions">
+                    <button class="btn btn-primary" id="refreshBtn" onclick="checkServerStatus()">
+                        <span class="btn-icon">🔄</span>
+                        Refresh Status
+                    </button>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>&copy; 2025 Server Monitor PWA</p>
+        </footer>
+    </div>
+
+    <!-- Offline notification -->
+    <div class="offline-notification" id="offlineNotification">
+        <div class="notification-content">
+            <span class="notification-icon">📡</span>
+            <span class="notification-text">Anda sedang tidak memiliki koneksi internet</span>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+
