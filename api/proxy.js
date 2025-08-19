@@ -13,7 +13,7 @@ module.exports = async (req, res) => {
     return;
   }
 
-  const targetUrl = "https://test.kreasibisnisdigital.com//";
+  const targetUrl = "https://test.kreasibisnisdigital.com/";
 
   try {
     const startTime = Date.now();
@@ -34,9 +34,41 @@ module.exports = async (req, res) => {
     // Get response text
     const responseText = await response.text();
 
+    // Determine if server is considered "active" based on status code
+    const isServerActive = response.status >= 200 && response.status < 400;
+
+    let errorMessage = null;
+    if (!isServerActive) {
+      switch (response.status) {
+        case 502:
+          errorMessage = "Bad Gateway";
+          break;
+        case 503:
+          errorMessage = "Service Unavailable";
+          break;
+        case 504:
+          errorMessage = "Gateway Timeout";
+          break;
+        case 500:
+          errorMessage = "Internal Server Error";
+          break;
+        case 404:
+          errorMessage = "Not Found";
+          break;
+        case 403:
+          errorMessage = "Forbidden";
+          break;
+        case 401:
+          errorMessage = "Unauthorized";
+          break;
+        default:
+          errorMessage = `HTTP ${response.status} ${response.statusText}`;
+      }
+    }
+
     // Return JSON response with server status info
     res.status(200).json({
-      success: true,
+      success: isServerActive,
       status: response.status,
       statusText: response.statusText,
       responseTime: responseTime,
@@ -44,9 +76,13 @@ module.exports = async (req, res) => {
       serverUrl: targetUrl,
       contentLength: responseText.length,
       headers: Object.fromEntries(response.headers.entries()),
+      error: errorMessage,
     });
   } catch (error) {
     console.error("Proxy error:", error);
+
+    const endTime = Date.now();
+    const responseTime = endTime - startTime;
 
     // Return error response with details
     res.status(200).json({
@@ -54,7 +90,9 @@ module.exports = async (req, res) => {
       error: error.message,
       timestamp: new Date().toISOString(),
       serverUrl: targetUrl,
-      responseTime: null,
+      responseTime: responseTime,
+      status: null,
+      statusText: null,
     });
   }
 };

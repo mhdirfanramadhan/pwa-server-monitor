@@ -1,7 +1,7 @@
 // Konfigurasi server
 const SERVER_CONFIG = {
   name: "Laragon Server",
-  url: "https://test.kreasibisnisdigital.com//",
+  url: "https://test.kreasibisnisdigital.com/",
   checkInterval: 30000, // 30 detik
   timeout: 10000, // 10 detik timeout
 };
@@ -120,7 +120,7 @@ async function checkServerStatus() {
   const startTime = Date.now();
 
   try {
-    // Gunakan fetch dengan timeout dan mode no-cors untuk menghindari CORS
+    // Gunakan fetch dengan timeout
     const controller = new AbortController();
     const timeoutId = setTimeout(
       () => controller.abort(),
@@ -130,16 +130,64 @@ async function checkServerStatus() {
     const response = await fetch("/api/proxy", {
       method: "GET",
       cache: "no-cache",
+      signal: controller.signal,
     });
 
+    clearTimeout(timeoutId);
+
+    // Cek apakah response dari proxy berhasil
+    if (!response.ok) {
+      updateServerStatus("offline", `Proxy Error (HTTP ${response.status})`);
+      responseTime = Date.now() - startTime;
+      updateLastCheck();
+      updateResponseTime();
+      return;
+    }
+
+    // Parse JSON response dari proxy
     const data = await response.json();
 
     if (data.success) {
       updateServerStatus("online", "Server Aktif");
       responseTime = data.responseTime;
     } else {
-      updateServerStatus("offline", "Server Tidak Aktif: " + data.error);
-      responseTime = data.responseTime;
+      // Server tidak aktif berdasarkan status code atau error lainnya
+      let errorMessage = "Server Tidak Aktif";
+
+      if (data.status) {
+        // Jika ada status code dari server target
+        switch (data.status) {
+          case 502:
+            errorMessage = "Server Tidak Aktif (Bad Gateway)";
+            break;
+          case 503:
+            errorMessage = "Server Tidak Aktif (Service Unavailable)";
+            break;
+          case 504:
+            errorMessage = "Server Tidak Aktif (Gateway Timeout)";
+            break;
+          case 500:
+            errorMessage = "Server Tidak Aktif (Internal Server Error)";
+            break;
+          case 404:
+            errorMessage = "Server Tidak Aktif (Not Found)";
+            break;
+          case 403:
+            errorMessage = "Server Tidak Aktif (Forbidden)";
+            break;
+          case 401:
+            errorMessage = "Server Tidak Aktif (Unauthorized)";
+            break;
+          default:
+            errorMessage = `Server Tidak Aktif (HTTP ${data.status})`;
+        }
+      } else if (data.error) {
+        // Jika ada error message dari proxy
+        errorMessage = "Server Tidak Aktif: " + data.error;
+      }
+
+      updateServerStatus("offline", errorMessage);
+      responseTime = data.responseTime || Date.now() - startTime;
     }
 
     updateLastCheck();
@@ -152,9 +200,11 @@ async function checkServerStatus() {
     if (error.name === "AbortError") {
       updateServerStatus("offline", "Timeout - Server tidak merespons");
     } else if (error.message.includes("Failed to fetch")) {
-      updateServerStatus("offline", "Server Tidak Aktif");
+      updateServerStatus("offline", "Server Tidak Aktif (Network Error)");
+    } else if (error.message.includes("NetworkError")) {
+      updateServerStatus("offline", "Server Tidak Aktif (Network Error)");
     } else {
-      updateServerStatus("offline", "Error: " + error.message);
+      updateServerStatus("offline", "Server Tidak Aktif: " + error.message);
     }
 
     updateLastCheck();
